@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>온라인 소설 도서관</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-container h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #999;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            user-select: text;
+            -webkit-user-select: text;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            display: none;
+            text-align: center;
+        }
+
+        .info-box {
+            background: #f0f4ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .info-box strong {
+            color: #667eea;
+        }
+
+        /* 책 선택 화면 */
+        .library-container {
+            display: none;
+            width: 100%;
+            max-width: 1400px;
+        }
+
+        .library-header {
+            background: white;
+            padding: 20px 40px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .library-header h2 {
+            color: #667eea;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .username-display {
+            color: #764ba2;
+            font-weight: 600;
+        }
+
+        .logout-btn {
+            padding: 10px 20px;
+            background: #764ba2;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .books-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 30px;
+            padding: 20px;
+        }
+
+        .book-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .book-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .book-cover {
+            width: 100%;
+            height: 390px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .book-cover::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="50" font-size="60" fill="rgba(255,255,255,0.1)">📖</text></svg>');
+            background-size: 80px;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .book-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .book-cover-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 0;
+        }
+
+        .book-cover-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+            padding: 20px;
+            z-index: 1;
+        }
+
+        .book-cover h3 {
+            color: white;
+            font-size: 24px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .book-info {
+            padding: 20px;
+        }
+
+        .book-author {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .book-description {
+            color: #888;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .book-chapters {
+            color: #667eea;
+            font-size: 12px;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        /* 독서 화면 */
+        .reader-container {
+            display: none;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .reader-header {
+            background: white;
+            padding: 20px 40px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .reader-header h2 {
+            color: #667eea;
+        }
+
+        .back-btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+
+        .book-viewer {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .book-content {
+            position: relative;
+            width: 100%;
+            min-height: 600px;
+            display: flex;
+            transition: opacity 0.3s ease;
+        }
+
+        .page {
+            flex: 1;
+            padding: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            background: #fffef7;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        .page.left {
+            border-right: 1px solid #e0e0e0;
+        }
+
+        .page-number {
+            position: absolute;
+            bottom: 20px;
+            font-size: 14px;
+            color: #999;
+        }
+
+        .page.left .page-number {
+            left: 60px;
+        }
+
+        .page.right .page-number {
+            right: 60px;
+        }
+
+        .page-content h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .page-content p {
+            color: #555;
+            line-height: 1.8;
+            font-size: 16px;
+            text-align: justify;
+            margin-bottom: 15px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 30px;
+            background: white;
+            border-radius: 0 0 20px 20px;
+        }
+
+        .control-btn {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .control-btn:hover:not(:disabled) {
+            transform: scale(1.05);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .page-info {
+            text-align: center;
+            color: white;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        /* 개발자 도구 경고 화면 */
+        .devtools-warning {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 99999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .devtools-warning.active {
+            display: flex;
+        }
+
+        .warning-content {
+            background: white;
+            padding: 50px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 500px;
+        }
+
+        .warning-content h1 {
+            color: #c33;
+            margin-bottom: 20px;
+            font-size: 32px;
+        }
+
+        .warning-content p {
+            color: #666;
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .reload-btn {
+            padding: 15px 40px;
+            background: #c33;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .books-grid {
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+                gap: 20px;
+            }
+
+            .book-cover {
+                height: 280px;
+            }
+
+            .book-icon {
+                font-size: 60px;
+            }
+
+            .book-cover h3 {
+                font-size: 18px;
+            }
+
+            .book-content {
+                flex-direction: column;
+            }
+
+            .page {
+                padding: 30px;
+                min-height: 400px;
+            }
+
+            .page.left {
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+            }
+
+            .library-header, .reader-header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 개발자 도구 경고 화면 -->
+    <div class="devtools-warning" id="devtoolsWarning">
+        <div class="warning-content">
+            <h1>⚠️ 접근 차단</h1>
+            <p>개발자 도구 사용이 감지되었습니다.<br>콘텐츠 보호를 위해 페이지가 차단되었습니다.</p>
+            <button class="reload-btn" onclick="location.reload()">페이지 새로고침</button>
+        </div>
+    </div>
+
+    <!-- 로그인 화면 -->
+    <div class="login-container" id="loginContainer">
+        <h1>📚 온라인 소설 도서관</h1>
+        <p class="subtitle">초대받은 회원만 입장 가능합니다</p>
+        
+        <div class="error-message" id="loginError"></div>
+        
+        <div class="input-group">
+            <label for="username">사용자 아이디</label>
+            <input type="text" id="username" placeholder="허용된 아이디를 입력하세요">
+        </div>
+        
+        <div class="input-group">
+            <label for="inviteCode">초대 코드</label>
+            <input type="password" id="inviteCode" placeholder="초대 코드를 입력하세요">
+        </div>
+        
+        <button class="login-btn" onclick="login()">로그인</button>
+        
+        <div class="info-box">
+            <strong>⚠️ 안내사항</strong><br>
+            • 허용된 아이디와 올바른 초대 코드가 필요합니다<br>
+            • 초대 코드는 관리자에게 문의하세요
+        </div>
+    </div>
+
+    <!-- 책 선택 화면 -->
+    <div class="library-container" id="libraryContainer">
+        <div class="library-header">
+            <h2>📚 나의 소설 라이브러리</h2>
+            <div class="user-info">
+                <span class="username-display" id="libraryUser"></span>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+
+        <div class="books-grid" id="booksGrid">
+            <!-- 책 카드들이 여기에 동적으로 추가됩니다 -->
+        </div>
+    </div>
+
+    <!-- 독서 화면 -->
+    <div class="reader-container" id="readerContainer">
+        <div class="reader-header">
+            <div>
+                <button class="back-btn" onclick="backToLibrary()">◀ 책장으로</button>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+            <h2 id="currentBookTitle">📖 독서 중</h2>
+            <div class="user-info">
+                <span class="username-display" id="readerUser"></span>
+            </div>
+        </div>
+
+        <div class="book-viewer">
+            <div class="book-content" id="bookContent">
+                <div class="page left">
+                    <div class="page-content" id="leftPage"></div>
+                    <div class="page-number" id="leftPageNum"></div>
+                </div>
+                <div class="page right">
+                    <div class="page-content" id="rightPage"></div>
+                    <div class="page-number" id="rightPageNum"></div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="control-btn" id="prevBtn" onclick="previousPage()">◀ 이전</button>
+                <button class="control-btn" id="nextBtn" onclick="nextPage()">다음 ▶</button>
+            </div>
+        </div>
+
+        <div class="page-info" id="pageInfo"></div>
+    </div>
+
+    <script>
+        // ========================================
+        // 🔐 개발자 도구 차단 시스템
+        // ========================================
+        
+        (function() {
+            const devtoolsWarning = document.getElementById('devtoolsWarning');
+            let devtoolsOpen = false;
+
+            const detectDevTools = () => {
+                const threshold = 160;
+                const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+                const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+                
+                if (widthThreshold || heightThreshold) {
+                    if (!devtoolsOpen) {
+                        devtoolsOpen = true;
+                        showWarning();
+                    }
+                }
+            };
+
+            function showWarning() {
+                devtoolsWarning.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+
+            setInterval(detectDevTools, 500);
+            
+            document.addEventListener('keydown', (e) => {
+                if (e.keyCode === 123 || 
+                    (e.ctrlKey && e.shiftKey && e.keyCode === 73) ||
+                    (e.ctrlKey && e.shiftKey && e.keyCode === 74) ||
+                    (e.ctrlKey && e.keyCode === 85) ||
+                    (e.ctrlKey && e.shiftKey && e.keyCode === 67)) {
+                    e.preventDefault();
+                    showWarning();
+                    return false;
+                }
+            });
+
+            document.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                return false;
+            });
+
+            document.addEventListener('copy', (e) => {
+                e.preventDefault();
+                return false;
+            });
+
+            document.addEventListener('selectstart', (e) => {
+                if (e.target.tagName !== 'INPUT') {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        })();
+
+        // ========================================
+        // 🔐 여기서 설정을 변경하세요!
+        // ========================================
+        
+        const INVITE_CODE = "1";
+        
+        const ALLOWED_USERS = [
+            "1",
+            "김철수"
+        ];
+        
+        // ========================================
+        // 📚 책 데이터
+        // ========================================
+        
+        const booksData = [
+            {
+                id: 1,
+                title: "《엄준식과 함께하는 이세계 생활》",
+                author: "이노치",
+                icon: "🏘️", // 이모지 또는 이미지 URL
+                coverImage: "images/cover1.png", // 여기에 이미지 URL을 넣으세요 (예: "https://example.com/cover.jpg")
+                description: "아무것도 안 했는데, 이세계가 알아서 구원됐다.",
+                chapters: 8,
+                color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                content: [
+                    {
+                        title: "프롤로그 ― 엄준식은 왜 엄준식인가",
+                        content: "엄준식은 평범했다.\n\n아니, 정확히 말하면 지나치게 평범해서 밈이 되어버린 남자였다.\n\n특별한 재능도, 특별한 꿈도 없고 그저 편의점 알바와 라면을 사랑하며\n\n“아… 귀찮다”를 입에 달고 살던 스물셋. 그런 엄준식이 이세계로 가게 된 이유는 단 하나였다. \n\n트럭도 아니고, 신의 선택도 아니고, 비 오는 날 맨홀을 피해 걷다가 미끄러진 것뿐이었다.\n\n“아.” 그게 엄준식의 마지막 말이었다."
+                    },
+                    {
+                        title: "1장 ― 이세계에 떨어졌는데 이름이 엄준식이다",
+                        content: "눈을 뜨자, 하늘은 파랗고 풀은 말도 안 되게 푸르렀다.\n\n“와… 여긴 또 어디야.”\n\n엄준식은 상체를 일으켰다.\n그리고 바로 눈앞에 떠오른 메시지를 보았다.\n\n[환영합니다, 이세계 ‘알테리아’에 오신 것을 환영합니다!]\n[이름을 확인합니다…]\n[엄준식]\n\n“…뭐?”\n잠시 후, 눈앞에 있던 요정이 굳어버렸다.\n“에… 이름이… 뭐라고요?”\n“엄준식이요.”\n요정은 한참을 침묵하다가 조심스럽게 말했다.\n“그… 발음이 혹시… 농담인가요?”\n“아니요. 주민등록증도 있어요. 아, 여기 없지.”\n그 순간, 시스템 메시지가 다시 떴다.\n[이름이 너무 강력합니다.]\n[주변 인식 보정이 적용됩니다.]\n요정은 고개를 끄덕이며 말했다.\n“아, 알겠습니다. 엄… 위대한 용사님.”\n“…왜 위대한이 붙는데.”\n“모르겠어요. 시스템이 그렇게 부르래요.”\n엄준식은 이때 깨달았다.\n\n이세계는 이상하다. 그리고 내 이름은 더 이상하다."
+                    },
+                    {
+                        title: "2장 ― 스킬이 없는데 이상하게 강하다",
+                        content: "보통 이세계 용사는\n검술 S, 마법 적성 MAX, 치트 스킬 같은 걸 받는다.\n엄준식의 상태창은 달랐다.\n\n[직업: 백수]\n[스킬: 없음]\n[특성: 엄준식]\n\n“특성 뭐야 이거.”\n요정은 진지한 얼굴로 설명했다.\n“‘엄준식’ 특성은…\n설명 불가입니다.”\n“아니 설명 불가가 어딨어.”\n그때, 슬라임이 튀어나왔다.\n“위험해요! 도망—”\n엄준식은 귀찮다는 듯 슬라임을 발로 찼다.\n퍽.\n슬라임은 증발했다.\n[슬라임이 정신적 패배를 인정했습니다.]\n[경험치를 획득하지 못했습니다.]\n“…경험치는 왜 안 줘.”\n“슬라임이… 스스로 패배해서요.”\n엄준식은 고개를 긁적였다.\n“뭐야 이거. 나 그냥 발로 찼는데.”\n요정은 떨리는 목소리로 중얼거렸다.\n“이세계에는…\n싸울 의지가 없는 자에게 패배하는 존재가 있습니다.”\n“그게 왜 나야."
+                    },
+                    {
+                        title: "제4장: 발견",
+                        content: "마을을 탐험하던 중 오래된 서점을 발견했다. 먼지 쌓인 책들 사이에서 그들은 신비한 일기를 찾았다.\n\n일기에는 마을의 비밀이 담겨 있었다. 수백 년 전의 이야기, 잊혀진 전설들...\n\n'우리가 이걸 읽어도 될까?' 그녀가 조심스럽게 물었다."
+                    },
+                    {
+                        title: "제5장: 진실",
+                        content: "일기를 읽으면서 그들은 놀라운 진실을 알게 되었다. 이 마을은 평범한 곳이 아니었다.\n\n마을 사람들은 특별한 능력을 가지고 있었다. 그들은 시간을 느리게 만들 수 있었다.\n\n'그래서 이곳이 이렇게 평화로운 거구나.' 그가 깨달았다."
+                    },
+                    {
+                        title: "제6장: 선택",
+                        content: "마을 장로가 그들을 찾아왔다. '우리의 비밀을 알게 되었군요. 이제 선택을 해야 합니다.'\n\n'여기 남아 우리와 함께 살거나, 아니면 떠나되 이곳의 기억을 잃어야 합니다.'\n\n두 사람은 서로를 바라보았다. 어떤 선택을 해야 할까?"
+                    },
+                    {
+                        title: "제7장: 결정",
+                        content: "오랜 고민 끝에 그들은 결정을 내렸다. '우리는 떠나겠습니다.'\n\n장로는 슬픈 표정으로 고개를 끄덕였다. '현명한 선택입니다. 당신들의 세계에는 더 많은 모험이 기다리고 있으니까요.'\n\n'하지만 기억을 잃는 건 원치 않습니다.' 그녀가 말했다."
+                    },
+                    {
+                        title: "제8장: 새로운 시작",
+                        content: "장로는 미소를 지었다. '그래도 괜찮습니다. 진정한 경험은 마음속 깊이 남는 법이니까요.'\n\n그들은 마을을 떠났다. 기억은 흐릿해졌지만, 가슴속에는 따뜻한 무언가가 남아있었다.\n\n'다음엔 어디로 갈까?' 그가 물었다. '어디든 좋아, 함께니까.' 그녀가 답했다."
+                    }
+                ]
+            },
+            {
+                id: 2,
+                title: "《엄준식과 함께하는 이세계 생활 2》",
+                author: "이노치",
+                icon: "⭐",
+                coverImage: "images/cover2.png", // 여기에 이미지 URL을 넣으세요
+                description: "가만히 있었을 뿐인데, 이번엔 신들이 불안해하기 시작했다.",
+                chapters: 5,
+                color: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+                content: [
+                    {
+                        title: "제1장: 첫 만남",
+                        content: "별이 가득한 밤하늘 아래, 두 사람은 처음 만났다. 우연히 같은 천문대를 찾은 그들은 같은 별을 바라보고 있었다.\n\n'저 별 이름이 뭔지 아세요?' 그가 먼저 말을 걸었다.\n\n'베가요. 직녀성이라고도 하죠.' 그녀가 대답했다."
+                    },
+                    {
+                        title: "제2장: 함께한 시간",
+                        content: "그 후로 두 사람은 자주 만났다. 밤하늘의 별들처럼 서로에게 빛이 되어주었다.\n\n매주 같은 시간, 같은 장소에서 만나 별을 보고 이야기를 나누었다.\n\n시간이 지나면서 두 사람의 우정은 점점 깊어져갔다."
+                    },
+                    {
+                        title: "제3장: 약속",
+                        content: "어느 유성우가 쏟아지는 밤, 그는 용기를 내어 고백했다.\n\n'저 별들처럼 당신 곁에서 영원히 빛나고 싶어요.'\n\n그녀는 미소 지으며 그의 손을 잡았다. '우리 함께 약속해요. 별빛 아래에서.'"
+                    },
+                    {
+                        title: "제4장: 시련",
+                        content: "하지만 행복한 시간은 오래가지 않았다. 그녀에게 먼 곳으로 떠나야 하는 일이 생겼다.\n\n'1년만 기다려줄 수 있어?' 그녀가 눈물을 흘리며 물었다.\n\n'별들이 사라지지 않는 한, 나도 여기서 기다릴게요.' 그가 대답했다."
+                    },
+                    {
+                        title: "제5장: 재회",
+                        content: "긴 기다림 끝에 그녀가 돌아왔다. 그들은 다시 천문대에서 만났다.\n\n같은 별빛 아래, 변함없이 그 자리를 지키고 있던 그를 보며 그녀는 울었다.\n\n'약속을 지켰구나.' '당연하죠. 우리의 약속은 별빛만큼 영원하니까요.'"
+                    }
+                ]
+            },
+            {
+                id: 3,
+                title: "미정",
+                author: "이노치",
+                icon: "⏰",
+                coverImage: "", // 여기에 이미지 URL을 넣으세요
+                description: "후속을 기대해 주세요!",
+                chapters: 6,
+                color: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+                content: [
+                ]
+            }
+        ];
+
+        let currentPage = 0;
+        let currentUsername = null;
+        let currentBook = null;
+
+        // 에러 메시지 표시
+        function showError(message) {
+            const errorDiv = document.getElementById('loginError');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // 로그인
+        function login() {
+            const username = document.getElementById('username').value.trim();
+            const inviteCode = document.getElementById('inviteCode').value;
+
+            if (!username || !inviteCode) {
+                showError('아이디와 초대 코드를 모두 입력해주세요.');
+                return;
+            }
+
+            if (inviteCode !== INVITE_CODE) {
+                showError('초대 코드가 올바르지 않습니다.');
+                return;
+            }
+
+            if (!ALLOWED_USERS.includes(username)) {
+                showError('허용되지 않은 아이디입니다. 관리자에게 문의하세요.');
+                return;
+            }
+
+            currentUsername = username;
+            document.getElementById('libraryUser').textContent = username + '님';
+            document.getElementById('readerUser').textContent = username + '님';
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('libraryContainer').style.display = 'block';
+            
+            document.getElementById('username').value = '';
+            document.getElementById('inviteCode').value = '';
+            
+            loadLibrary();
+        }
+
+        // 로그아웃
+        function logout() {
+            currentUsername = null;
+            currentPage = 0;
+            currentBook = null;
+            document.getElementById('readerContainer').style.display = 'none';
+            document.getElementById('libraryContainer').style.display = 'none';
+            document.getElementById('loginContainer').style.display = 'block';
+        }
+
+        // 책 선택 화면 로드
+        function loadLibrary() {
+            const booksGrid = document.getElementById('booksGrid');
+            booksGrid.innerHTML = '';
+
+            booksData.forEach(book => {
+                const bookCard = document.createElement('div');
+                bookCard.className = 'book-card';
+                bookCard.onclick = () => openBook(book.id);
+
+                // 이미지 URL이 있으면 이미지 사용, 없으면 아이콘 사용
+                const coverContent = book.coverImage 
+                    ? `<img src="${book.coverImage}" class="book-cover-image" alt="${book.title}">
+                       <div class="book-cover-overlay">
+                           <h3>${book.title}</h3>
+                       </div>`
+                    : `<div class="book-icon">${book.icon}</div>
+                       <h3>${book.title}</h3>`;
+
+                bookCard.innerHTML = `
+                    <div class="book-cover" style="background: ${book.color}">
+                        ${coverContent}
+                    </div>
+                    <div class="book-info">
+                        <div class="book-author">저자: ${book.author}</div>
+                        <div class="book-description">${book.description}</div>
+                        <div class="book-chapters">총 ${book.chapters}장</div>
+                    </div>
+                `;
+
+                booksGrid.appendChild(bookCard);
+            });
+        }
+
+        // 책 열기
+        function openBook(bookId) {
+            currentBook = booksData.find(book => book.id === bookId);
+            if (!currentBook) return;
+
+            currentPage = 0;
+            document.getElementById('currentBookTitle').textContent = '📖 ' + currentBook.title;
+            document.getElementById('libraryContainer').style.display = 'none';
+            document.getElementById('readerContainer').style.display = 'block';
+            
+            loadPages();
+        }
+
+        // 책장으로 돌아가기
+        function backToLibrary() {
+            currentBook = null;
+            currentPage = 0;
+            document.getElementById('readerContainer').style.display = 'none';
+            document.getElementById('libraryContainer').style.display = 'block';
+        }
+
+        function loadPages() {
+            if (!currentBook) return;
+
+            const leftPage = document.getElementById('leftPage');
+            const rightPage = document.getElementById('rightPage');
+            const leftPageNum = document.getElementById('leftPageNum');
+            const rightPageNum = document.getElementById('rightPageNum');
+            const bookContent = document.getElementById('bookContent');
+
+            bookContent.style.opacity = '0';
+            
+            setTimeout(() => {
+                if (currentPage < currentBook.content.length) {
+                    const data = currentBook.content[currentPage];
+                    leftPage.innerHTML = `<h3>${data.title}</h3><p>${data.content.replace(/\n/g, '</p><p>')}</p>`;
+                    leftPageNum.textContent = currentPage + 1;
+                } else {
+                    leftPage.innerHTML = '<p>끝</p>';
+                    leftPageNum.textContent = '';
+                }
+
+                if (currentPage + 1 < currentBook.content.length) {
+                    const data = currentBook.content[currentPage + 1];
+                    rightPage.innerHTML = `<h3>${data.title}</h3><p>${data.content.replace(/\n/g, '</p><p>')}</p>`;
+                    rightPageNum.textContent = currentPage + 2;
+                } else {
+                    rightPage.innerHTML = '';
+                    rightPageNum.textContent = '';
+                }
+
+                bookContent.style.opacity = '1';
+                updateControls();
+                updatePageInfo();
+            }, 150);
+        }
+
+        function nextPage() {
+            if (!currentBook || currentPage >= currentBook.content.length - 1) return;
+            currentPage += 2;
+            loadPages();
+        }
+
+        function previousPage() {
+            if (!currentBook || currentPage <= 0) return;
+            currentPage -= 2;
+            if (currentPage < 0) currentPage = 0;
+            loadPages();
+        }
+
+        function updateControls() {
+            if (!currentBook) return;
+            document.getElementById('prevBtn').disabled = currentPage <= 0;
+            document.getElementById('nextBtn').disabled = currentPage >= currentBook.content.length - 1;
+        }
+
+        function updatePageInfo() {
+            if (!currentBook) return;
+            const totalPages = currentBook.content.length;
+            const currentDisplayPage = Math.min(currentPage + 1, totalPages);
+            document.getElementById('pageInfo').textContent = 
+                `페이지 ${currentDisplayPage}-${Math.min(currentPage + 2, totalPages)} / 총 ${totalPages}페이지`;
+        }
+
+        // 키보드 단축키
+        document.addEventListener('keydown', (e) => {
+            if (document.getElementById('readerContainer').style.display === 'block') {
+                if (e.key === 'ArrowLeft') previousPage();
+                if (e.key === 'ArrowRight') nextPage();
+            }
+        });
+
+        document.getElementById('inviteCode').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') login();
+        });
+        
+        document.getElementById('username').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('inviteCode').focus();
+            }
+        });
+    </script>
+</body>
+</html>
